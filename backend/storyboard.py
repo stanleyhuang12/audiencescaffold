@@ -1,4 +1,7 @@
 from __future__ import __annotations__
+from typing import List
+from litellm import completion 
+from abc import ABC, abstractmethod
 
 
 AVAILABLE_CONTENTS = [
@@ -14,8 +17,8 @@ class Node:
         self.content = content
         self.content_type = content_type 
         self._validate_type()
-        
-        self.data = (self.content, self.content_type)
+       
+        self.data = {"content": self.content, "content_type": self.content_type}
     
     def _validate_type(self): 
         if self.content_type not in AVAILABLE_CONTENTS: 
@@ -26,15 +29,36 @@ class Node:
     @property 
     def _get_data(self): 
         return self.data 
+    
+    def __repr__(self): 
+        return (f"Node(content={self.content!r}, content_type={self.content_type!r})")
 
 
+node = Node(
+    "Willy Wonka swept open the peppermint-striped gates of the factory with a conspiratorial grin, "
+    "inviting the children into a world where rivers tasted of chocolate and every hallway "
+    "seemed to hide another improbable confection.",
+    "text"
+)
+node
 
 class Operator: 
     """
-    An operator works as a way to manipulate two nodes. 
+    An operator is a structure that enables users to manipulate node(s). 
     """
-    def __init__(self, node: Node): 
-        self.node = node
+    def __init__(self, nodes: List[Node]): 
+        self.nodes = nodes
+    
+    def _prepare_prompt(self): 
+        pass 
+    
+    @abstractmethod 
+    def process(self): 
+        """
+        Each operator will implement their own `process` method.
+        """
+
+        pass 
 
 class Connector(Operator):
     pass
@@ -42,7 +66,7 @@ class Connector(Operator):
 class Causal(Operator): 
     pass 
 
-class Cluster(Operator):
+class Perspective(Operator):
     pass
 
 
