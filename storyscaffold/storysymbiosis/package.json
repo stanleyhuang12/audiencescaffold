@@ -1,0 +1,15 @@
+{
+  "name": "storysymbiosis",
+  "version": "0.1.0",
+  "description": "AI audience agents that observe your creative work",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "screenshot-desktop": "^1.12.7"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}

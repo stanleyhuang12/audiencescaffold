@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src * data:; font-src https://fonts.gstatic.com; connect-src *;">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: transparent;
+  font-family: 'DM Sans', sans-serif;
+  overflow: hidden;
+  width: 320px;
+}
+
+/* ── Shell ── */
+.shell {
+  width: 320px;
+  background: rgba(10,10,10,0.96);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Titlebar ── */
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  -webkit-app-region: no-drag;
+  cursor: grab;
+  user-select: none;
+}
+.titlebar:active { cursor: grabbing; }
+
+.wordmark {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #2e2e2e;
+  letter-spacing: 0.04em;
+}
+.wordmark span { color: #1a1a1a; }
+
+.tb-right { display: flex; align-items: center; gap: 6px; }
+
+.capture-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #1a1a1a;
+  transition: background 0.2s;
+}
+.capture-dot.active { background: #444; animation: pulse 0.7s ease-in-out infinite; }
+.capture-dot.manual { background: #7F77DD !important; }
+
+@keyframes pulse { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
+
+.wbtn {
+  width: 13px; height: 13px; border-radius: 50%;
+  border: none; cursor: pointer; font-size: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: transparent; transition: color 0.1s;
+}
+.wbtn:hover { color: rgba(0,0,0,0.7); }
+.wbtn.min { background: #BA7517; }
+.wbtn.cls { background: #D85A30; }
+
+/* ── Grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  padding: 9px;
+}
+
+/* ── Agent Card ── */
+.card {
+  background: rgba(16,16,16,0.97);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 11px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: default;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+}
+.card.active {
+  cursor: pointer;
+}
+.card.active:hover {
+  background: color-mix(in srgb, var(--c) 7%, rgba(16,16,16,0.97));
+}
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.avatar {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  border: 1.5px solid color-mix(in srgb, var(--c) 25%, transparent);
+  background: color-mix(in srgb, var(--c) 12%, #1c1c1c);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+.card.active .avatar {
+  border-color: color-mix(in srgb, var(--c) 55%, transparent);
+}
+.avatar-initial {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px; font-weight: 700;
+  color: var(--c);
+}
+
+/* Speech bubble */
+.bubble-wrap {
+  display: flex; align-items: center; flex: 1;
+  animation: pop 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes pop { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
+
+.bubble-tail {
+  width:0; height:0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 6px solid;
+  border-right-color: color-mix(in srgb, var(--c) 18%, rgba(20,20,20,0.98));
+  flex-shrink: 0;
+}
+.bubble {
+  background: color-mix(in srgb, var(--c) 10%, rgba(20,20,20,0.98));
+  border: 1px solid color-mix(in srgb, var(--c) 20%, transparent);
+  border-radius: 8px;
+  padding: 5px 8px;
+  min-height: 28px;
+  flex: 1;
+  display: flex; align-items: center;
+}
+.bubble-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  color: color-mix(in srgb, var(--c) 65%, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+/* Dots */
+.dots { display:flex; gap:3px; align-items:center; }
+.dot {
+  width:4px; height:4px; border-radius:50%;
+  background: color-mix(in srgb, var(--c) 55%, #555);
+  animation: blink 1.2s ease-in-out infinite;
+}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:0.15}40%{opacity:1}}
+
+/* Agent name/role */
+.agent-meta { display:flex; flex-direction:column; gap:1px; padding-left:1px; }
+.agent-name { font-size:11px; font-weight:600; color:#d0cbc4; }
+.agent-role {
+  font-family:'DM Mono',monospace;
+  font-size:8px; color:#2e2e2e;
+  text-transform:uppercase; letter-spacing:0.06em;
+}
+.card.active .agent-role { color: color-mix(in srgb, var(--c) 40%, #2e2e2e); }
+
+/* Comment panel */
+.comment-panel {
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  display: flex; flex-direction: column; gap: 7px;
+  animation: slide 0.15s ease;
+}
+@keyframes slide{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+
+.comment-text {
+  font-size: 11px; line-height: 1.6; color: #9e9990; margin: 0;
+}
+
+.ref-btn, .dismiss-btn {
+  background: none; border: none; cursor: pointer; padding: 0; text-align: left;
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.ref-btn   { color: color-mix(in srgb, var(--c) 50%, #444); }
+.ref-btn:hover { color: var(--c); }
+.dismiss-btn { color: #222; }
+.dismiss-btn:hover { color: #555; }
+
+/* Artifact */
+.artifact {
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px; overflow: hidden;
+  animation: slide 0.15s ease;
+}
+.art-img  { width:100%; height:62px; object-fit:cover; display:block; }
+.art-ph   { width:100%; height:42px; background:#181818; }
+.art-meta { padding:6px 8px; display:flex; flex-direction:column; gap:2px; }
+.art-title { font-size:10px; font-weight:600; color:#bbb; }
+.art-sub   { font-family:'DM Mono',monospace; font-size:8px; color:#444; }
+.art-cap   { font-size:9px; color:#666; line-height:1.4; margin:1px 0 0; }
+
+.art-loading { display:flex; align-items:center; justify-content:center; gap:4px; padding:10px; }
+.art-loading .dot { background: #333; }
+
+/* ── Footer ── */
+.footer {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px 10px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+.foot-label {
+  font-family:'DM Mono',monospace;
+  font-size:8px; text-transform:uppercase; letter-spacing:0.08em;
+  color:#222; white-space:nowrap;
+}
+.slider { flex:1; accent-color:#3a3a3a; cursor:pointer; }
+.capture-btn {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px; color:#3a3a3a;
+  font-size:14px; width:24px; height:24px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; flex-shrink:0; transition: color 0.15s;
+}
+.capture-btn:hover { color:#888; }
+.capture-btn.spinning { animation: spin 0.7s linear infinite; color:#7F77DD; }
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Titlebar -->
+  <div class="titlebar" id="titlebar">
+    <div class="wordmark"><span>◈ </span>storysymbiosis</div>
+    <div class="tb-right">
+      <div class="capture-dot" id="cap-dot"></div>
+      <button class="wbtn min" onclick="api.minimize()">—</button>
+      <button class="wbtn cls" onclick="api.close()">×</button>
+    </div>
+  </div>
+
+  <!-- 2×2 agent grid (built by JS) -->
+  <div class="grid" id="grid"></div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span class="foot-label">Voice</span>
+    <input type="range" class="slider" min="0" max="1" step="0.05" value="0.5" id="slider"/>
+    <button class="capture-btn" id="cap-btn" title="Capture now (⌘⇧S)" onclick="manualCapture()">↺</button>
+  </div>
+
+</div>
+
+<script>
+// ── Agent definitions ─────────────────────────────────────────────────────────
+const AGENTS = [
+  { id: 'recombinability', name: 'Remi', role: 'Recombinability', color: '#7F77DD', initial: 'R' },
+  { id: 'contrarian',      name: 'Cass', role: 'Contrarian',      color: '#D85A30', initial: 'C' },
+  { id: 'discoverability', name: 'Dex',  role: 'Discoverability', color: '#1D9E75', initial: 'D' },
+  { id: 'reviewability',   name: 'Rex',  role: 'Reviewability',   color: '#BA7517', initial: 'X' },
+]
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const state = {}
+AGENTS.forEach(a => {
+  state[a.id] = {
+    hasMessage: false,
+    comment: null,
+    artifact: null,
+    loadingComment: false,
+    loadingArtifact: false,
+    expanded: false,
+    artifactOpen: false,
+  }
+})
+
+// ── Build DOM ─────────────────────────────────────────────────────────────────
+function buildGrid() {
+  const grid = document.getElementById('grid')
+  AGENTS.forEach(agent => {
+    const card = document.createElement('div')
+    card.className = 'card'
+    card.id = `card-${agent.id}`
+    card.style.setProperty('--c', agent.color)
+    card.onclick = () => onCardClick(agent.id)
+
+    card.innerHTML = `
+      <div class="card-top" id="top-${agent.id}">
+        <div class="avatar">
+          <span class="avatar-initial">${agent.initial}</span>
+        </div>
+        <div id="bubble-${agent.id}" class="hidden"></div>
+      </div>
+      <div class="agent-meta">
+        <span class="agent-name">${agent.name}</span>
+        <span class="agent-role">${agent.role}</span>
+      </div>
+      <div id="panel-${agent.id}" class="hidden"></div>
+    `
+    grid.appendChild(card)
+  })
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(id) {
+  const s = state[id]
+  const agent = AGENTS.find(a => a.id === id)
+  const card = document.getElementById(`card-${id}`)
+  const bubbleEl = document.getElementById(`bubble-${id}`)
+  const panelEl = document.getElementById(`panel-${id}`)
+
+  // Card active state
+  card.classList.toggle('active', s.hasMessage || !!s.comment)
+
+  // Speech bubble
+  if (s.hasMessage || s.comment || s.loadingComment) {
+    bubbleEl.className = 'bubble-wrap'
+    let inner = ''
+    if (s.loadingComment) {
+      inner = `<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`
+    } else if (s.comment && !s.expanded) {
+      inner = `<span class="bubble-text">tap to read ▸</span>`
+    } else if (s.comment && s.expanded) {
+      inner = `<span class="bubble-text">▾ collapse</span>`
+    } else {
+      inner = `<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`
+    }
+    bubbleEl.innerHTML = `<div class="bubble-tail"></div><div class="bubble">${inner}</div>`
+  } else {
+    bubbleEl.className = 'hidden'
+    bubbleEl.innerHTML = ''
+  }
+
+  // Comment panel
+  if (s.expanded && s.comment) {
+    panelEl.className = 'comment-panel'
+
+    let artifactHTML = ''
+    if (s.artifactOpen) {
+      if (s.loadingArtifact) {
+        artifactHTML = `<div class="art-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`
+      } else if (s.artifact) {
+        const img = s.artifact.image_url
+          ? `<img class="art-img" src="${s.artifact.image_url}" alt="${s.artifact.title}"/>`
+          : `<div class="art-ph"></div>`
+        const sub = s.artifact.creator
+          ? `<span class="art-sub">${s.artifact.creator}${s.artifact.year ? `, ${s.artifact.year}` : ''}</span>`
+          : ''
+        artifactHTML = `<div class="artifact">${img}<div class="art-meta"><span class="art-title">${s.artifact.title}</span>${sub}<p class="art-cap">${s.artifact.caption}</p></div></div>`
+      }
+    }
+
+    panelEl.innerHTML = `
+      <p class="comment-text">${s.comment}</p>
+      <button class="ref-btn" onclick="toggleArtifact('${id}')">
+        ${s.artifactOpen ? '▾' : '▸'} reference
+      </button>
+      ${artifactHTML}
+      <button class="dismiss-btn" onclick="dismiss('${id}')">dismiss ×</button>
+    `
+  } else {
+    panelEl.className = 'hidden'
+    panelEl.innerHTML = ''
+  }
+}
+
+function renderAll() { AGENTS.forEach(a => render(a.id)) }
+
+// ── Interactions ──────────────────────────────────────────────────────────────
+async function onCardClick(id) {
+  const s = state[id]
+  if (!s.hasMessage && !s.comment) return
+  if (s.comment) {
+    state[id].expanded = !state[id].expanded
+    render(id)
+    return
+  }
+  if (s.loadingComment) return
+  state[id].loadingComment = true
+  render(id)
+  const data = await api.fetchComment(id)
+  state[id].loadingComment = false
+  state[id].comment = data.comment
+  state[id].expanded = true
+  render(id)
+}
+
+async function toggleArtifact(id) {
+  state[id].artifactOpen = !state[id].artifactOpen
+  if (state[id].artifactOpen && !state[id].artifact && !state[id].loadingArtifact) {
+    state[id].loadingArtifact = true
+    render(id)
+    const data = await api.fetchArtifact(id)
+    state[id].loadingArtifact = false
+    state[id].artifact = data.artifact || null
+  }
+  render(id)
+}
+
+async function dismiss(id) {
+  await api.dismissComment(id)
+  state[id] = { hasMessage:false, comment:null, artifact:null, loadingComment:false, loadingArtifact:false, expanded:false, artifactOpen:false }
+  render(id)
+}
+
+// ── Capture ───────────────────────────────────────────────────────────────────
+function manualCapture() {
+  api.manualCapture()
+}
+
+// ── Slider ────────────────────────────────────────────────────────────────────
+document.getElementById('slider').addEventListener('change', e => {
+  api.updateSlider(parseFloat(e.target.value))
+})
+
+// ── IPC events ────────────────────────────────────────────────────────────────
+api.on('capture-start', ({ manual }) => {
+  const dot = document.getElementById('cap-dot')
+  const btn = document.getElementById('cap-btn')
+  dot.classList.add('active')
+  if (manual) dot.classList.add('manual')
+  btn.classList.add('spinning')
+})
+
+api.on('capture-done', () => {
+  const dot = document.getElementById('cap-dot')
+  dot.classList.remove('active', 'manual')
+  document.getElementById('cap-btn').classList.remove('spinning')
+})
+
+api.on('cycle-complete', ({ hand_raisers, manual }) => {
+  // capture-done cleanup
+  const dot = document.getElementById('cap-dot')
+  dot.classList.remove('active', 'manual')
+  document.getElementById('cap-btn').classList.remove('spinning')
+
+  const raisers = new Set(hand_raisers)
+  AGENTS.forEach(a => {
+    state[a.id].hasMessage = raisers.has(a.id) || !!state[a.id].comment
+  })
+  renderAll()
+})
+
+// ── Drag (frameless window) ───────────────────────────────────────────────────
+let dragOrigin = null
+document.getElementById('titlebar').addEventListener('mousedown', e => {
+  dragOrigin = { x: e.screenX, y: e.screenY }
+})
+window.addEventListener('mousemove', e => {
+  if (!dragOrigin) return
+  api.drag({ dx: e.screenX - dragOrigin.x, dy: e.screenY - dragOrigin.y })
+  dragOrigin = { x: e.screenX, y: e.screenY }
+})
+window.addEventListener('mouseup', () => { dragOrigin = null })
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+buildGrid()
+renderAll()
+</script>
+</body>
+</html>
