@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer, shell } = require('electron')
 
 contextBridge.exposeInMainWorld('api', {
   fetchComment:    (id)               => ipcRenderer.invoke('fetch-comment', id),
@@ -12,5 +12,7 @@ contextBridge.exposeInMainWorld('api', {
   drag:            (d)                => ipcRenderer.send('window-drag', d),
   close:           ()                 => ipcRenderer.send('window-close'),
   minimize:        ()                 => ipcRenderer.send('window-minimize'),
-  on: (ch, cb) => ipcRenderer.on(ch, (_, data) => cb(data)),
+  on:       (ch, cb) => ipcRenderer.on(ch, (_, data) => cb(data)),
+  openLink: (url)    => shell.openExternal(url),
+  resize:   (h)      => ipcRenderer.send('window-resize', h),
 })
