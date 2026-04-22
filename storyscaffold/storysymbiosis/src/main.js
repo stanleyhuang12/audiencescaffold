@@ -44,6 +44,7 @@ function createWindow() {
 // ── Session ───────────────────────────────────────────────────────────────────
 async function initSession() {
   try {
+    await new Promise(resolve => setTimeout(resolve, 30_000))                                                             
     const data = await post('/session/new', {})
     sessionId = data.session_id
     console.log('[SS] session:', sessionId)
@@ -76,6 +77,7 @@ async function captureAndProcess(manual = false) {
 }
 
 function startLoop() {
+  setTimeout()
   captureAndProcess()
   captureInterval = setInterval(captureAndProcess, INTERVAL_MS)
 }
