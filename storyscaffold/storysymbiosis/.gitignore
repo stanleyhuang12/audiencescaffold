@@ -5,7 +5,7 @@ out/
 *.env.*
 __pycache__/
 *.pyc
-.venv/
+.venv/src/renderer/img/avatar0.png
 venv/
 *.egg-info/
 .DS_Store

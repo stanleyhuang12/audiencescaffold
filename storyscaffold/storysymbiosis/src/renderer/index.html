@@ -18,14 +18,29 @@ body {
 /* ── Shell ── */
 .shell {
   width: 320px;
-  background: rgba(10,10,10,0.96);
-  border: 1px solid rgba(255,255,255,0.12);
+  background:
+    linear-gradient(160deg, rgba(15,0,30,0.97) 0%, rgba(5,10,25,0.97) 60%, rgba(0,15,20,0.97) 100%);
+  border: 1px solid rgba(0,255,255,0.25);
   border-radius: 16px;
-  overflow: visible; /* allow export menu to float above footer */
+  overflow: visible;
   display: flex;
   flex-direction: column;
   position: relative;
+  box-shadow: 0 0 18px rgba(0,255,255,0.08), 0 0 40px rgba(180,0,255,0.06), inset 0 0 30px rgba(0,0,0,0.4);
 }
+.shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background-image:
+    linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+  z-index: 0;
+}
+.shell > * { position: relative; z-index: 1; }
 
 /* ── Titlebar ── */
 .titlebar {
@@ -33,7 +48,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 9px 12px 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(0,255,255,0.1);
   -webkit-app-region: no-drag;
   cursor: grab;
   user-select: none;
@@ -43,19 +58,20 @@ body {
 .wordmark {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
-  color: #d0d0d0;
-  letter-spacing: 0.04em;
+  color: #00ffe0;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 8px rgba(0,255,224,0.6);
 }
-.wordmark span { color: #1a1a1a; }
+.wordmark span { color: rgba(0,255,224,0.3); }
 
 .tb-right { display: flex; align-items: center; gap: 6px; }
 
 .capture-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: #a41818;
-  transition: background 0.2s;
+  background: #333;
+  transition: background 0.2s, opacity 0.2s;
 }
-.capture-dot.active { background: #444; animation: pulse 0.7s ease-in-out infinite; }
+.capture-dot.active { background: #a41818; animation: pulse 0.7s ease-in-out infinite; }
 .capture-dot.manual { background: #7F77DD !important; }
 
 @keyframes pulse { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
@@ -76,26 +92,35 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 7px;
   padding: 9px;
+  justify-items: center;
+  align-items: start;
 }
 
 /* ── Agent Card ── */
 .card {
-  background: rgba(16,16,16,0.97);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: color-mix(in srgb, var(--c) 6%, rgba(8,4,20,0.97));
+  border: 1px solid color-mix(in srgb, var(--c) 30%, rgba(0,255,255,0.08));
   border-radius: 11px;
   padding: 10px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
-  cursor: default;
-  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
   position: relative;
+}
+.card:hover {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--c) 25%, transparent);
 }
 .card.active {
   cursor: pointer;
+  border-color: color-mix(in srgb, var(--c) 55%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c) 30%, transparent);
 }
 .card.active:hover {
-  background: color-mix(in srgb, var(--c) 7%, rgba(16,16,16,0.97));
+  background: color-mix(in srgb, var(--c) 11%, rgba(8,4,20,0.97));
 }
 
 .card-top {
@@ -105,7 +130,7 @@ body {
 }
 
 .avatar {
-  width: 46px; height: 46px;
+  width: 58px; height: 58px;
   border-radius: 10px;
   border: 1.5px solid color-mix(in srgb, var(--c) 25%, transparent);
   background: color-mix(in srgb, var(--c) 12%, #1c1c1c);
@@ -174,13 +199,13 @@ body {
 
 /* Agent name/role */
 .agent-meta { display:flex; flex-direction:column; gap:1px; padding-left:1px; }
-.agent-name { font-size:11px; font-weight:600; color:#d0cbc4; }
+.agent-name { font-size:11px; font-weight:600; color: color-mix(in srgb, var(--c) 75%, #d0cbc4); }
 .agent-role {
   font-family:'DM Mono',monospace;
-  font-size:8px; color:#555;
+  font-size:8px; color: color-mix(in srgb, var(--c) 50%, #555);
   text-transform:uppercase; letter-spacing:0.06em;
 }
-.card.active .agent-role { color: color-mix(in srgb, var(--c) 40%, #2e2e2e); }
+.card.active .agent-role { color: color-mix(in srgb, var(--c) 70%, #555); }
 
 /* Comment panel */
 .comment-panel {
@@ -275,23 +300,23 @@ body {
 .footer {
   display: flex; align-items: center; gap: 8px;
   padding: 7px 12px 10px;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(0,255,255,0.08);
 }
 .foot-label {
   font-family:'DM Mono',monospace;
   font-size:8px; text-transform:uppercase; letter-spacing:0.08em;
-  color:#222; white-space:nowrap;
+  color:#666; white-space:nowrap;
 }
-.slider { flex:1; accent-color:#3a3a3a; cursor:pointer; }
+.slider { flex:1; accent-color:#FF2D78; cursor:pointer; }
 .capture-btn {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 6px; color:#3a3a3a;
+  border-radius: 6px; color:#888;
   font-size:14px; width:24px; height:24px;
   display:flex; align-items:center; justify-content:center;
   cursor:pointer; flex-shrink:0; transition: color 0.15s;
 }
-.capture-btn:hover { color:#888; }
+.capture-btn:hover { color:#ccc; }
 .capture-btn.spinning { animation: spin 0.7s linear infinite; color:#7F77DD; }
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -334,6 +359,68 @@ body {
 }
 
 .hidden { display: none !important; }
+
+/* ── Full panel overlay ── */
+.full-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 150;
+  background: linear-gradient(160deg, rgba(12,0,25,0.99) 0%, rgba(4,8,20,0.99) 60%, rgba(0,12,18,0.99) 100%);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 16px 16px;
+  gap: 14px;
+  transform-origin: center center;
+}
+.full-panel.entering { animation: fpIn 0.28s cubic-bezier(0.34,1.4,0.64,1) forwards; }
+.full-panel.leaving  { animation: fpOut 0.18s ease forwards; }
+@keyframes fpIn  { from{transform:scale(0.35);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes fpOut { from{transform:scale(1);opacity:1}   to{transform:scale(0.35);opacity:0} }
+
+.fp-header {
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0,255,255,0.1);
+}
+.fp-avatar {
+  width: 42px; height: 42px; border-radius: 10px;
+  overflow: hidden; border: 1.5px solid; flex-shrink: 0;
+}
+.fp-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.fp-name { font-size: 14px; font-weight: 600; }
+.fp-role {
+  font-family: 'DM Mono', monospace; font-size: 8px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.fp-comment {
+  font-size: 12px; line-height: 1.75; color: #b0a8c0; flex: 1;
+}
+.fp-feedback-label {
+  font-family: 'DM Mono', monospace; font-size: 7px;
+  text-transform: uppercase; letter-spacing: 0.08em; color: #555;
+  margin-bottom: 7px;
+}
+.fp-buttons { display: flex; flex-direction: column; gap: 6px; }
+.fp-btn {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px; padding: 8px 12px;
+  cursor: pointer; text-align: left;
+  font-family: 'DM Sans', sans-serif; font-size: 10px; color: #666;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  width: 100%;
+}
+.fp-btn:hover {
+  background: color-mix(in srgb, var(--fp-c) 10%, rgba(255,255,255,0.03));
+  border-color: color-mix(in srgb, var(--fp-c) 35%, transparent);
+  color: color-mix(in srgb, var(--fp-c) 80%, #ccc);
+}
+.fp-btn.selected {
+  background: color-mix(in srgb, var(--fp-c) 14%, rgba(16,16,16,0.97));
+  border-color: color-mix(in srgb, var(--fp-c) 50%, transparent);
+  color: color-mix(in srgb, var(--fp-c) 90%, #ccc);
+}
 </style>
 </head>
 <body>
@@ -352,6 +439,9 @@ body {
 
   <!-- 2×2 agent grid (built by JS) -->
   <div class="grid" id="grid"></div>
+
+  <!-- Full panel overlay -->
+  <div id="full-panel" class="full-panel hidden"></div>
 
   <!-- Export dropdown menu (shown above footer) -->
   <div id="export-menu" class="export-menu hidden">
@@ -467,42 +557,8 @@ function render(id) {
     bubbleEl.innerHTML = ''
   }
 
-  // Comment panel
-  if (s.expanded && s.comment) {
-    panelEl.className = 'comment-panel'
-
-    // Feedback buttons HTML
-    const feedbackHTML = buildFeedbackHTML(id, s)
-
-    // Artifact HTML
-    let artifactHTML = ''
-    if (s.artifactOpen) {
-      if (s.loadingArtifact) {
-        artifactHTML = `<div class="art-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`
-      } else if (s.artifact) {
-        const img = s.artifact.image_url
-          ? `<img class="art-img" src="${s.artifact.image_url}" alt="${s.artifact.title}"/>`
-          : `<div class="art-ph"></div>`
-        const sub = s.artifact.creator
-          ? `<span class="art-sub">${s.artifact.creator}${s.artifact.year ? `, ${s.artifact.year}` : ''}</span>`
-          : ''
-        artifactHTML = `<div class="artifact">${img}<div class="art-meta"><span class="art-title">${s.artifact.title}</span>${sub}<p class="art-cap">${s.artifact.caption}</p></div></div>`
-      }
-    }
-
-    panelEl.innerHTML = `
-      <p class="comment-text">${s.comment}</p>
-      ${feedbackHTML}
-      <button class="ref-btn" onclick="toggleArtifact('${id}')">
-        ${s.artifactOpen ? '▾' : '▸'} reference
-      </button>
-      ${artifactHTML}
-      <button class="dismiss-btn" onclick="dismiss('${id}')">dismiss ×</button>
-    `
-  } else {
-    panelEl.className = 'hidden'
-    panelEl.innerHTML = ''
-  }
+  panelEl.className = 'hidden'
+  panelEl.innerHTML = ''
 }
 
 function buildFeedbackHTML(id, s) {
@@ -528,37 +584,86 @@ function buildFeedbackHTML(id, s) {
 
 function renderAll() { AGENTS.forEach(a => render(a.id)) }
 
+// ── Full panel ────────────────────────────────────────────────────────────────
+let _fullPanelId = null
+
+function showFullPanel(id) {
+  const agent = AGENTS.find(a => a.id === id)
+  const s = state[id]
+  _fullPanelId = id
+
+  const panel = document.getElementById('full-panel')
+  panel.style.setProperty('--fp-c', agent.color)
+  panel.innerHTML = `
+    <div class="fp-header">
+      <div class="fp-avatar" style="border-color:color-mix(in srgb,${agent.color} 50%,transparent)">
+        <img src="${agent.avatar}" alt="${agent.name}"/>
+      </div>
+      <div>
+        <div class="fp-name" style="color:color-mix(in srgb,${agent.color} 75%,#d0cbc4)">${agent.name}</div>
+        <div class="fp-role" style="color:color-mix(in srgb,${agent.color} 50%,#555)">${agent.role}</div>
+      </div>
+    </div>
+    <p class="fp-comment">${s.comment}</p>
+    <div>
+      <div class="fp-feedback-label">Your take</div>
+      <div class="fp-buttons">
+        ${FEEDBACK_OPTIONS.map(opt => `
+          <button class="fp-btn${s.feedbackKey === opt.key ? ' selected' : ''}"
+            onclick="fpFeedback('${id}','${opt.key}')">
+            <span style="margin-right:6px;opacity:0.6">${opt.icon}</span>${opt.label}
+          </button>`).join('')}
+      </div>
+    </div>
+  `
+  panel.classList.remove('hidden', 'leaving')
+  panel.classList.add('entering')
+  panel.addEventListener('animationend', () => panel.classList.remove('entering'), { once: true })
+}
+
+async function fpFeedback(id, key) {
+  state[id].feedbackKey = key
+  const preview = state[id].comment ? state[id].comment.slice(0, 80) : ''
+  await api.submitFeedback(id, key, preview)
+  closeFullPanel()
+}
+
+function closeFullPanel() {
+  const panel = document.getElementById('full-panel')
+  const id = _fullPanelId
+  panel.classList.remove('entering')
+  panel.classList.add('leaving')
+  panel.addEventListener('animationend', () => {
+    panel.classList.add('hidden')
+    panel.classList.remove('leaving')
+    if (id) {
+      state[id] = {
+        hasMessage: false, comment: null, artifact: null,
+        loadingComment: false, loadingArtifact: false,
+        expanded: false, artifactOpen: false, feedbackKey: null,
+      }
+      render(id)
+    }
+    _fullPanelId = null
+  }, { once: true })
+}
+
 // ── Interactions ──────────────────────────────────────────────────────────────
 async function onCardClick(id) {
   const s = state[id]
   if (!s.hasMessage && !s.comment) return
-  if (s.comment) {
-    state[id].expanded = !state[id].expanded
-    render(id)
-    return
-  }
   if (s.loadingComment) return
-  state[id].loadingComment = true
-  render(id)
-  const data = await api.fetchComment(id)
-  state[id].loadingComment = false
-  state[id].comment = data.comment
-  state[id].expanded = true
-  render(id)
+  if (!s.comment) {
+    state[id].loadingComment = true
+    render(id)
+    const data = await api.fetchComment(id)
+    state[id].loadingComment = false
+    state[id].comment = data.comment
+    render(id)
+  }
+  showFullPanel(id)
 }
 
-async function submitFeedback(evt, id, key) {
-  // Stop the click from bubbling up to the card (which would toggle collapse)
-  evt.stopPropagation()
-
-  const s = state[id]
-  // Allow changing selection
-  state[id].feedbackKey = key
-  render(id)
-
-  const preview = s.comment ? s.comment.slice(0, 80) : ''
-  await api.submitFeedback(id, key, preview)
-}
 
 async function toggleArtifact(id) {
   state[id].artifactOpen = !state[id].artifactOpen
@@ -661,6 +766,12 @@ window.addEventListener('mouseup', () => { dragOrigin = null })
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 buildGrid()
+
+// TEMP: hardcoded example — agents with pending thoughts
+state['recombinability'].hasMessage = true
+state['contrarian'].hasMessage = true
+state['discoverability'].hasMessage = true
+
 renderAll()
 </script>
 </body>

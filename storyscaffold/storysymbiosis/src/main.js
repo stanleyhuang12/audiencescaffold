@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, screen, globalShortcut, dialog } = require('electron')
+require('electron-reload')(__dirname)
 const path = require('path')
 const fs = require('fs')
 const screenshot = require('screenshot-desktop')
