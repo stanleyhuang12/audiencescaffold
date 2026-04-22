@@ -1,22 +1,30 @@
 """
-main.py — StorySymbiosis FastAPI backend (simplified)
+main.py — StorySymbiosis FastAPI backend
 
 Routes:
-  POST /process          — screenshot → VLM → stochastic agent roll → SSE
-  GET  /stream/{sid}     — SSE stream for the floating panel
-  POST /comment          — user clicked agent; generate comment
-  POST /artifact         — user requested artifact from agent
-  POST /slider           — update global speak probability multiplier
-  GET  /export/{sid}     — download audit trail
-  POST /session/new      — create session
+  POST /session/new           — create session
+  POST /process               — screenshot → VLM → stochastic agent roll
+  GET  /stream/{sid}          — SSE stream for the floating panel
+  POST /comment               — user clicked agent; generate comment
+  POST /artifact              — user requested artifact from agent
+  POST /comment/feedback      — user responded to a comment (three-button widget)
+  POST /comment/dismiss       — user dismissed a comment
+  POST /slider                — update global speak probability multiplier
+
+  Export:
+  GET  /export/{sid}          — full JSON audit trail
+  GET  /export/{sid}/events   — interaction events as CSV
+  GET  /export/{sid}/states   — VLM state snapshots as CSV
+
+Environment variables required:
+  GEMINI_API_KEY              — Google Gemini API key
 """
 
 import json, os, asyncio, random
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, Response
 from pydantic import BaseModel
-import httpx
 
 import session as sess
 from vlm import screenshot_to_state
@@ -37,37 +45,40 @@ app = FastAPI(title="StorySymbiosis")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
-# ── Models ────────────────────────────────────────────────────────────────────
+# ── Request models ────────────────────────────────────────────────────────────
 
 class ProcessRequest(BaseModel):
     session_id: str
     image_b64: str
+    manual: bool = False        # true when triggered by user hotkey / button
 
 class CommentRequest(BaseModel):
     session_id: str
     agent_id: str
+    trigger: str = "user_click"  # 'user_click' | 'passive_cue'
 
 class ArtifactRequest(BaseModel):
     session_id: str
     agent_id: str
 
-class SliderRequest(BaseModel):
+class FeedbackRequest(BaseModel):
     session_id: str
-    value: float   # 0.0–1.0 multiplier on all speak_probabilities
+    agent_id: str
+    feedback_key: str            # 'explore' | 'different' | 'unsure'
+    comment_preview: str = ""
 
 class DismissRequest(BaseModel):
     session_id: str
     agent_id: str
 
+class SliderRequest(BaseModel):
+    session_id: str
+    value: float                 # 0.0–1.0
+
 
 # ── Stochastic roll ───────────────────────────────────────────────────────────
 
 def roll_speakers(personas: list[dict], slider: float, state_count: int) -> list[str]:
-    """
-    Each agent independently rolls against its speak_probability * slider.
-    Returns at most 2 agents that won the roll, in descending probability order.
-    Agents below min_states_required are excluded.
-    """
     winners = []
     for p in personas:
         if state_count < p.get("min_states_required", 1):
@@ -75,12 +86,11 @@ def roll_speakers(personas: list[dict], slider: float, state_count: int) -> list
         effective_prob = p["speak_probability"] * (0.3 + 0.7 * slider)
         if random.random() < effective_prob:
             winners.append((p["id"], p["speak_probability"]))
-    # Sort by base probability descending, cap at 2
     winners.sort(key=lambda x: x[1], reverse=True)
     return [w[0] for w in winners[:2]]
 
 
-# ── Routes ────────────────────────────────────────────────────────────────────
+# ── Session ───────────────────────────────────────────────────────────────────
 
 @app.post("/session/new")
 async def new_session():
@@ -89,20 +99,21 @@ async def new_session():
     return {"session_id": sid}
 
 
+# ── Core processing ───────────────────────────────────────────────────────────
+
 @app.post("/process")
 async def process(req: ProcessRequest):
     s = sess.get_or_create(req.session_id)
     prior_state = s.states[-1] if s.states else None
 
-    # VLM: image → descriptive state
     current_state = await screenshot_to_state(req.image_b64, prior_state)
     s.add_state(current_state)
 
-    # Stochastic roll — who speaks this cycle?
+    trigger = "active" if req.manual else "passive"
     hand_raisers = roll_speakers(PERSONAS, s.slider_value, len(s.states))
     s.current_hand_raisers = hand_raisers
     for aid in hand_raisers:
-        s.log_hand_raise(aid)
+        s.log_hand_raise(aid, trigger=trigger)
 
     event = {
         "type": "cycle_complete",
@@ -128,6 +139,8 @@ async def sse_stream(session_id: str):
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
+# ── Agent interaction ─────────────────────────────────────────────────────────
+
 @app.post("/comment")
 async def get_comment(req: CommentRequest):
     s = sess.get(req.session_id)
@@ -137,7 +150,7 @@ async def get_comment(req: CommentRequest):
     if not persona:
         return JSONResponse({"error": "unknown agent"}, status_code=400)
     comment = await generate_comment(persona, s.states[-1], s.states)
-    s.log_comment_shown(req.agent_id, comment)
+    s.log_comment_shown(req.agent_id, comment, trigger=req.trigger)
     return {"agent_id": req.agent_id, "comment": comment}
 
 
@@ -152,6 +165,21 @@ async def get_artifact(req: ArtifactRequest):
     artifact = await generate_artifact(persona, s.states[-1], s.states)
     s.log_artifact_shown(req.agent_id, artifact)
     return {"agent_id": req.agent_id, "artifact": artifact}
+
+
+@app.post("/comment/feedback")
+async def submit_feedback(req: FeedbackRequest):
+    valid_keys = {"explore", "different", "unsure"}
+    if req.feedback_key not in valid_keys:
+        return JSONResponse(
+            {"error": f"feedback_key must be one of {valid_keys}"},
+            status_code=400,
+        )
+    s = sess.get(req.session_id)
+    if not s:
+        return JSONResponse({"error": "session not found"}, status_code=404)
+    s.log_feedback(req.agent_id, req.feedback_key, req.comment_preview)
+    return {"status": "ok"}
 
 
 @app.post("/comment/dismiss")
@@ -169,9 +197,59 @@ async def update_slider(req: SliderRequest):
     return {"status": "ok"}
 
 
-@app.get("/export/{session_id}")
-async def export_session(session_id: str):
+# ── Export ────────────────────────────────────────────────────────────────────
+
+def _get_session_or_404(session_id: str):
     s = sess.get(session_id)
     if not s:
-        return JSONResponse({"error": "not found"}, status_code=404)
-    return JSONResponse(s.export())
+        return None, JSONResponse({"error": "session not found"}, status_code=404)
+    return s, None
+
+
+@app.get("/export/{session_id}")
+async def export_json(session_id: str):
+    """Full nested JSON audit trail."""
+    s, err = _get_session_or_404(session_id)
+    if err:
+        return err
+    return JSONResponse(s.export_json())
+
+
+@app.get("/export/{session_id}/events")
+async def export_events_csv(session_id: str):
+    """
+    Flat CSV of all interaction events — one row per event.
+    Excludes state snapshots (those are in /export/{sid}/states).
+
+    Columns: session_id, ts, event_type, agent_id, state_index,
+             trigger, feedback_key, feedback_label,
+             comment_preview, comment_full, artifact_title
+    """
+    s, err = _get_session_or_404(session_id)
+    if err:
+        return err
+    csv_text = s.export_events_csv()
+    return Response(
+        content=csv_text,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="events_{session_id[:8]}.csv"'},
+    )
+
+
+@app.get("/export/{session_id}/states")
+async def export_states_csv(session_id: str):
+    """
+    Flat CSV of VLM state snapshots — one row per screen capture cycle.
+    Joins to events.csv on (session_id, state_index).
+
+    Columns: session_id, state_index, ts, state_preview, state_full
+    """
+    s, err = _get_session_or_404(session_id)
+    if err:
+        return err
+    csv_text = s.export_states_csv()
+    return Response(
+        content=csv_text,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="states_{session_id[:8]}.csv"'},
+    )

@@ -19,11 +19,12 @@ body {
 .shell {
   width: 320px;
   background: rgba(10,10,10,0.96);
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible; /* allow export menu to float above footer */
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 /* ── Titlebar ── */
@@ -42,7 +43,7 @@ body {
 .wordmark {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
-  color: #2e2e2e;
+  color: #d0d0d0;
   letter-spacing: 0.04em;
 }
 .wordmark span { color: #1a1a1a; }
@@ -51,7 +52,7 @@ body {
 
 .capture-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: #1a1a1a;
+  background: #a41818;
   transition: background 0.2s;
 }
 .capture-dot.active { background: #444; animation: pulse 0.7s ease-in-out infinite; }
@@ -104,13 +105,19 @@ body {
 }
 
 .avatar {
-  width: 38px; height: 38px;
+  width: 46px; height: 46px;
   border-radius: 10px;
   border: 1.5px solid color-mix(in srgb, var(--c) 25%, transparent);
   background: color-mix(in srgb, var(--c) 12%, #1c1c1c);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   transition: border-color 0.2s;
+}
+
+.avatar-img { 
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 8px;  
 }
 .card.active .avatar {
   border-color: color-mix(in srgb, var(--c) 55%, transparent);
@@ -170,7 +177,7 @@ body {
 .agent-name { font-size:11px; font-weight:600; color:#d0cbc4; }
 .agent-role {
   font-family:'DM Mono',monospace;
-  font-size:8px; color:#2e2e2e;
+  font-size:8px; color:#555;
   text-transform:uppercase; letter-spacing:0.06em;
 }
 .card.active .agent-role { color: color-mix(in srgb, var(--c) 40%, #2e2e2e); }
@@ -195,8 +202,58 @@ body {
 }
 .ref-btn   { color: color-mix(in srgb, var(--c) 50%, #444); }
 .ref-btn:hover { color: var(--c); }
-.dismiss-btn { color: #222; }
+.dismiss-btn { color: #444; }
 .dismiss-btn:hover { color: #555; }
+
+/* ── Feedback widget ── */
+.feedback-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+  animation: slide 0.2s ease;
+}
+.feedback-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666; 
+}
+.feedback-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.fb-btn {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  color: #555;
+  line-height: 1.4;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  width: 100%;
+}
+.fb-btn:hover {
+  background: color-mix(in srgb, var(--c) 8%, rgba(255,255,255,0.03));
+  border-color: color-mix(in srgb, var(--c) 25%, transparent);
+  color: color-mix(in srgb, var(--c) 70%, #999);
+}
+.fb-btn.selected {
+  background: color-mix(in srgb, var(--c) 12%, rgba(16,16,16,0.97));
+  border-color: color-mix(in srgb, var(--c) 40%, transparent);
+  color: color-mix(in srgb, var(--c) 85%, #ccc);
+}
+.fb-btn .fb-icon {
+  display: inline-block;
+  margin-right: 5px;
+  opacity: 0.6;
+}
 
 /* Artifact */
 .artifact {
@@ -238,6 +295,44 @@ body {
 .capture-btn.spinning { animation: spin 0.7s linear infinite; color:#7F77DD; }
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* ── Export menu ── */
+.export-menu {
+  position: absolute;
+  bottom: 44px; right: 12px;
+  background: rgba(18,18,18,0.98);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 180px;
+  animation: slide 0.12s ease;
+  z-index: 100;
+}
+.export-item {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 8px 11px;
+  background: none; border: none; width: 100%;
+  text-align: left; cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.1s;
+}
+.export-item:last-child { border-bottom: none; }
+.export-item:hover { background: rgba(255,255,255,0.04); }
+.export-item-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px; font-weight: 500; color: #888;
+}
+.export-item-desc {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px; color: #333;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+.avatar-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
 .hidden { display: none !important; }
 </style>
 </head>
@@ -247,7 +342,7 @@ body {
 
   <!-- Titlebar -->
   <div class="titlebar" id="titlebar">
-    <div class="wordmark"><span>◈ </span>storysymbiosis</div>
+    <div class="wordmark"><span>◈ </span>your audience</div>
     <div class="tb-right">
       <div class="capture-dot" id="cap-dot"></div>
       <button class="wbtn min" onclick="api.minimize()">—</button>
@@ -258,10 +353,27 @@ body {
   <!-- 2×2 agent grid (built by JS) -->
   <div class="grid" id="grid"></div>
 
+  <!-- Export dropdown menu (shown above footer) -->
+  <div id="export-menu" class="export-menu hidden">
+    <button class="export-item" onclick="doExport('events')">
+      <span class="export-item-label">Interaction events</span>
+      <span class="export-item-desc">CSV · clicks, feedback, dismissals</span>
+    </button>
+    <button class="export-item" onclick="doExport('states')">
+      <span class="export-item-label">State snapshots</span>
+      <span class="export-item-desc">CSV · screen descriptions over time</span>
+    </button>
+    <button class="export-item" onclick="doExport('json')">
+      <span class="export-item-label">Full audit trail</span>
+      <span class="export-item-desc">JSON · complete session log</span>
+    </button>
+  </div>
+
   <!-- Footer -->
   <div class="footer">
     <span class="foot-label">Voice</span>
     <input type="range" class="slider" min="0" max="1" step="0.05" value="0.5" id="slider"/>
+    <button class="capture-btn" id="export-btn" title="Export session data" onclick="toggleExportMenu()">⤓</button>
     <button class="capture-btn" id="cap-btn" title="Capture now (⌘⇧S)" onclick="manualCapture()">↺</button>
   </div>
 
@@ -270,10 +382,17 @@ body {
 <script>
 // ── Agent definitions ─────────────────────────────────────────────────────────
 const AGENTS = [
-  { id: 'recombinability', name: 'Remi', role: 'Recombinability', color: '#7F77DD', initial: 'R' },
-  { id: 'contrarian',      name: 'Cass', role: 'Contrarian',      color: '#D85A30', initial: 'C' },
-  { id: 'discoverability', name: 'Dex',  role: 'Discoverability', color: '#1D9E75', initial: 'D' },
-  { id: 'reviewability',   name: 'Rex',  role: 'Reviewability',   color: '#BA7517', initial: 'X' },
+  { id: 'recombinability', name: 'Remi', role: 'Recombinability', color: '#7F77DD', avatar: 'img/avatar0.png' },
+  { id: 'contrarian',      name: 'Cass', role: 'Contrarian',      color: '#D85A30', avatar: 'img/avatar1.png' },
+  { id: 'discoverability', name: 'Dex',  role: 'Discoverability', color: '#1D9E75', avatar: 'img/avatar2.png' },
+  { id: 'reviewability',   name: 'Rex',  role: 'Reviewability',   color: '#BA7517', avatar: 'img/avatar3.png' },
+]
+
+// Feedback button definitions
+const FEEDBACK_OPTIONS = [
+  { key: 'explore',   icon: '◆', label: 'Interesting — worth exploring' },
+  { key: 'different', icon: '→', label: 'I have a different direction' },
+  { key: 'unsure',    icon: '○', label: 'Not sure at this moment' },
 ]
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -287,6 +406,7 @@ AGENTS.forEach(a => {
     loadingArtifact: false,
     expanded: false,
     artifactOpen: false,
+    feedbackKey: null,   // which button was selected (null = not yet responded)
   }
 })
 
@@ -303,7 +423,7 @@ function buildGrid() {
     card.innerHTML = `
       <div class="card-top" id="top-${agent.id}">
         <div class="avatar">
-          <span class="avatar-initial">${agent.initial}</span>
+          <img class="avatar-img" src="${agent.avatar}" alt="${agent.name}" />
         </div>
         <div id="bubble-${agent.id}" class="hidden"></div>
       </div>
@@ -351,6 +471,10 @@ function render(id) {
   if (s.expanded && s.comment) {
     panelEl.className = 'comment-panel'
 
+    // Feedback buttons HTML
+    const feedbackHTML = buildFeedbackHTML(id, s)
+
+    // Artifact HTML
     let artifactHTML = ''
     if (s.artifactOpen) {
       if (s.loadingArtifact) {
@@ -368,6 +492,7 @@ function render(id) {
 
     panelEl.innerHTML = `
       <p class="comment-text">${s.comment}</p>
+      ${feedbackHTML}
       <button class="ref-btn" onclick="toggleArtifact('${id}')">
         ${s.artifactOpen ? '▾' : '▸'} reference
       </button>
@@ -378,6 +503,27 @@ function render(id) {
     panelEl.className = 'hidden'
     panelEl.innerHTML = ''
   }
+}
+
+function buildFeedbackHTML(id, s) {
+  const buttons = FEEDBACK_OPTIONS.map(opt => {
+    const isSelected = s.feedbackKey === opt.key
+    return `
+      <button
+        class="fb-btn${isSelected ? ' selected' : ''}"
+        onclick="submitFeedback(event, '${id}', '${opt.key}')"
+      >
+        <span class="fb-icon">${opt.icon}</span>${opt.label}
+      </button>
+    `
+  }).join('')
+
+  return `
+    <div class="feedback-section">
+      <span class="feedback-label">Your take</span>
+      <div class="feedback-buttons">${buttons}</div>
+    </div>
+  `
 }
 
 function renderAll() { AGENTS.forEach(a => render(a.id)) }
@@ -401,6 +547,19 @@ async function onCardClick(id) {
   render(id)
 }
 
+async function submitFeedback(evt, id, key) {
+  // Stop the click from bubbling up to the card (which would toggle collapse)
+  evt.stopPropagation()
+
+  const s = state[id]
+  // Allow changing selection
+  state[id].feedbackKey = key
+  render(id)
+
+  const preview = s.comment ? s.comment.slice(0, 80) : ''
+  await api.submitFeedback(id, key, preview)
+}
+
 async function toggleArtifact(id) {
   state[id].artifactOpen = !state[id].artifactOpen
   if (state[id].artifactOpen && !state[id].artifact && !state[id].loadingArtifact) {
@@ -415,7 +574,11 @@ async function toggleArtifact(id) {
 
 async function dismiss(id) {
   await api.dismissComment(id)
-  state[id] = { hasMessage:false, comment:null, artifact:null, loadingComment:false, loadingArtifact:false, expanded:false, artifactOpen:false }
+  state[id] = {
+    hasMessage: false, comment: null, artifact: null,
+    loadingComment: false, loadingArtifact: false,
+    expanded: false, artifactOpen: false, feedbackKey: null,
+  }
   render(id)
 }
 
@@ -423,6 +586,34 @@ async function dismiss(id) {
 function manualCapture() {
   api.manualCapture()
 }
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function toggleExportMenu() {
+  const menu = document.getElementById('export-menu')
+  menu.classList.toggle('hidden')
+}
+
+async function doExport(format) {
+  document.getElementById('export-menu').classList.add('hidden')
+  const btn = document.getElementById('export-btn')
+  btn.style.color = '#7F77DD'
+  btn.style.pointerEvents = 'none'
+  try {
+    await api.exportSession(format)
+  } finally {
+    btn.style.color = ''
+    btn.style.pointerEvents = ''
+  }
+}
+
+// Close export menu if user clicks outside it
+window.addEventListener('click', e => {
+  const menu = document.getElementById('export-menu')
+  const btn  = document.getElementById('export-btn')
+  if (!menu.classList.contains('hidden') && !menu.contains(e.target) && e.target !== btn) {
+    menu.classList.add('hidden')
+  }
+})
 
 // ── Slider ────────────────────────────────────────────────────────────────────
 document.getElementById('slider').addEventListener('change', e => {
@@ -445,7 +636,6 @@ api.on('capture-done', () => {
 })
 
 api.on('cycle-complete', ({ hand_raisers, manual }) => {
-  // capture-done cleanup
   const dot = document.getElementById('cap-dot')
   dot.classList.remove('active', 'manual')
   document.getElementById('cap-btn').classList.remove('spinning')
