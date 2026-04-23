@@ -12,12 +12,13 @@ body {
   background: transparent;
   font-family: 'DM Sans', sans-serif;
   overflow: hidden;
-  width: 320px;
+  width: 100%;
 }
 
 /* ── Shell ── */
 .shell {
-  width: 320px;
+  width: 100%;
+  min-width: 260px;
   background:
     linear-gradient(160deg, rgba(15,0,30,0.97) 0%, rgba(5,10,25,0.97) 60%, rgba(0,15,20,0.97) 100%);
   border: 1px solid rgba(0,255,255,0.25);
@@ -247,37 +248,30 @@ body {
 }
 .feedback-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex-direction: row;
+  gap: 4px;
 }
 .fb-btn {
+  flex: 1;
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.05);
   border-radius: 6px;
-  padding: 5px 8px;
+  padding: 5px 2px;
   cursor: pointer;
-  text-align: left;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 9px;
-  color: #555;
-  line-height: 1.4;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
 .fb-btn:hover {
   background: color-mix(in srgb, var(--c) 8%, rgba(255,255,255,0.03));
   border-color: color-mix(in srgb, var(--c) 25%, transparent);
-  color: color-mix(in srgb, var(--c) 70%, #999);
+  transform: scale(1.12);
 }
 .fb-btn.selected {
   background: color-mix(in srgb, var(--c) 12%, rgba(16,16,16,0.97));
   border-color: color-mix(in srgb, var(--c) 40%, transparent);
-  color: color-mix(in srgb, var(--c) 85%, #ccc);
-}
-.fb-btn .fb-icon {
-  display: inline-block;
-  margin-right: 5px;
-  opacity: 0.6;
+  transform: scale(1.12);
 }
 
 /* Artifact */
@@ -367,6 +361,7 @@ body {
   z-index: 150;
   background: linear-gradient(160deg, rgba(12,0,25,0.99) 0%, rgba(4,8,20,0.99) 60%, rgba(0,12,18,0.99) 100%);
   border-radius: 16px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   padding: 18px 16px 16px;
@@ -377,6 +372,106 @@ body {
 .full-panel.leaving  { animation: fpOut 0.18s ease forwards; }
 @keyframes fpIn  { from{transform:scale(0.35);opacity:0} to{transform:scale(1);opacity:1} }
 @keyframes fpOut { from{transform:scale(1);opacity:1}   to{transform:scale(0.35);opacity:0} }
+
+/* ── Artifact side panel ── */
+.artifact-panel {
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--fp-c) 35%, rgba(0,255,255,0.08));
+  background: color-mix(in srgb, var(--fp-c) 6%, rgba(6,2,14,0.98));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--fp-c) 12%, transparent);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.artifact-panel.ap-in  { animation: apSlideIn 0.3s cubic-bezier(0.34,1.3,0.64,1) forwards; }
+.artifact-panel.ap-out { animation: apSlideOut 0.18s ease forwards; }
+@keyframes apSlideIn  { from{transform:translateY(-12px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes apSlideOut { from{transform:translateY(0);opacity:1}     to{transform:translateY(-8px);opacity:0} }
+
+.ap-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--fp-c) 18%, rgba(255,255,255,0.04));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ap-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--fp-c) 50%, #444);
+}
+.ap-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #444;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color 0.15s;
+}
+.ap-close:hover { color: #aaa; }
+.fp-close {
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; color: #555; line-height: 1; padding: 0 2px;
+  transition: color 0.15s; flex-shrink: 0;
+}
+.fp-close:hover { color: #ccc; }
+.ap-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.ap-title {
+  font-size: 13px; font-weight: 600;
+  color: color-mix(in srgb, var(--fp-c) 70%, #d0cbc4);
+  line-height: 1.35;
+}
+.ap-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: color-mix(in srgb, var(--fp-c) 45%, #555);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ap-caption {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #999;
+}
+.ap-footer { padding: 8px 12px 10px; }
+.ap-link {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: color-mix(in srgb, var(--fp-c) 55%, #444);
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--fp-c) 22%, transparent);
+  border-radius: 5px;
+  padding: 4px 8px;
+  cursor: pointer;
+  background: none;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  width: 100%;
+  text-align: center;
+}
+.ap-link:hover {
+  color: color-mix(in srgb, var(--fp-c) 85%, #ccc);
+  border-color: color-mix(in srgb, var(--fp-c) 45%, transparent);
+  background: color-mix(in srgb, var(--fp-c) 8%, transparent);
+}
+.ap-link.hidden { display: none !important; }
+.ap-loading {
+  display: flex; align-items: center; justify-content: center;
+  gap: 4px; padding: 24px 0; flex: 1;
+}
+.ap-loading .dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: color-mix(in srgb, var(--fp-c) 40%, #333);
+  animation: blink 1.2s ease-in-out infinite;
+}
+.ap-loading .dot:nth-child(2){animation-delay:.2s}
+.ap-loading .dot:nth-child(3){animation-delay:.4s}
 
 .fp-header {
   display: flex; align-items: center; gap: 10px;
@@ -393,33 +488,66 @@ body {
   font-family: 'DM Mono', monospace; font-size: 8px;
   text-transform: uppercase; letter-spacing: 0.06em;
 }
+.fp-body {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.fp-body::-webkit-scrollbar { width: 3px; }
+.fp-body::-webkit-scrollbar-track { background: transparent; }
+.fp-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 .fp-comment {
-  font-size: 12px; line-height: 1.75; color: #b0a8c0; flex: 1;
+  font-size: 13px; line-height: 1.8; color: #d4cedf;
 }
 .fp-feedback-label {
   font-family: 'DM Mono', monospace; font-size: 7px;
   text-transform: uppercase; letter-spacing: 0.08em; color: #555;
   margin-bottom: 7px;
 }
-.fp-buttons { display: flex; flex-direction: column; gap: 6px; }
+.fp-buttons { display: flex; flex-direction: row; gap: 8px; }
 .fp-btn {
+  flex: 1;
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px; padding: 8px 12px;
-  cursor: pointer; text-align: left;
-  font-family: 'DM Sans', sans-serif; font-size: 10px; color: #666;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-  width: 100%;
+  border-radius: 10px; padding: 10px 4px;
+  cursor: pointer; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.fp-btn-face { font-size: 20px; line-height: 1; }
+.fp-btn-label {
+  font-family: 'DM Mono', monospace; font-size: 7px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: #555; line-height: 1.2;
 }
 .fp-btn:hover {
   background: color-mix(in srgb, var(--fp-c) 10%, rgba(255,255,255,0.03));
   border-color: color-mix(in srgb, var(--fp-c) 35%, transparent);
-  color: color-mix(in srgb, var(--fp-c) 80%, #ccc);
+  transform: scale(1.06);
 }
+.fp-btn:hover .fp-btn-label { color: color-mix(in srgb, var(--fp-c) 70%, #999); }
 .fp-btn.selected {
   background: color-mix(in srgb, var(--fp-c) 14%, rgba(16,16,16,0.97));
   border-color: color-mix(in srgb, var(--fp-c) 50%, transparent);
-  color: color-mix(in srgb, var(--fp-c) 90%, #ccc);
+  transform: scale(1.06);
+}
+.fp-btn.selected .fp-btn-label { color: color-mix(in srgb, var(--fp-c) 80%, #ccc); }
+
+.fp-noticed {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--fp-c) 45%, #555);
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.slider-wrap { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.slider-labels {
+  display: flex; justify-content: space-between;
+  font-family: 'DM Mono', monospace;
+  font-size: 7px; color: #3a3a3a; letter-spacing: 0.04em;
+  padding: 0 2px;
 }
 </style>
 </head>
@@ -462,7 +590,10 @@ body {
   <!-- Footer -->
   <div class="footer">
     <span class="foot-label">Voice</span>
-    <input type="range" class="slider" min="0" max="1" step="0.05" value="0.5" id="slider"/>
+    <div class="slider-wrap">
+      <input type="range" class="slider" min="0" max="1" step="0.05" value="0.5" id="slider"/>
+      <div class="slider-labels"><span>quiet</span><span>balanced</span><span>open</span></div>
+    </div>
     <button class="capture-btn" id="export-btn" title="Export session data" onclick="toggleExportMenu()">⤓</button>
     <button class="capture-btn" id="cap-btn" title="Capture now (⌘⇧S)" onclick="manualCapture()">↺</button>
   </div>
@@ -480,25 +611,20 @@ const AGENTS = [
 
 // Feedback button definitions
 const FEEDBACK_OPTIONS = [
-  { key: 'explore',   icon: '◆', label: 'Interesting — worth exploring' },
-  { key: 'different', icon: '→', label: 'I have a different direction' },
-  { key: 'unsure',    icon: '○', label: 'Not sure at this moment' },
+  { key: 'explore',   icon: '😊', label: 'Exploring' },
+  { key: 'different', icon: '😐', label: 'Different' },
+  { key: 'unsure',    icon: '😔', label: 'Not sure' },
 ]
 
 // ── State ─────────────────────────────────────────────────────────────────────
+function resetAgentState() {
+  return { hasMessage: false, comment: null, noticed: null, artifact: null,
+           loadingComment: false, loadingArtifact: false,
+           expanded: false, artifactOpen: false, feedbackKey: null }
+}
+
 const state = {}
-AGENTS.forEach(a => {
-  state[a.id] = {
-    hasMessage: false,
-    comment: null,
-    artifact: null,
-    loadingComment: false,
-    loadingArtifact: false,
-    expanded: false,
-    artifactOpen: false,
-    feedbackKey: null,   // which button was selected (null = not yet responded)
-  }
-})
+AGENTS.forEach(a => { state[a.id] = resetAgentState() })
 
 // ── Build DOM ─────────────────────────────────────────────────────────────────
 function buildGrid() {
@@ -541,17 +667,7 @@ function render(id) {
   // Speech bubble
   if (s.hasMessage || s.comment || s.loadingComment) {
     bubbleEl.className = 'bubble-wrap'
-    let inner = ''
-    if (s.loadingComment) {
-      inner = `<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`
-    } else if (s.comment && !s.expanded) {
-      inner = `<span class="bubble-text">tap to read ▸</span>`
-    } else if (s.comment && s.expanded) {
-      inner = `<span class="bubble-text">▾ collapse</span>`
-    } else {
-      inner = `<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`
-    }
-    bubbleEl.innerHTML = `<div class="bubble-tail"></div><div class="bubble">${inner}</div>`
+    bubbleEl.innerHTML = `<div class="bubble-tail"></div><div class="bubble"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`
   } else {
     bubbleEl.className = 'hidden'
     bubbleEl.innerHTML = ''
@@ -568,9 +684,8 @@ function buildFeedbackHTML(id, s) {
       <button
         class="fb-btn${isSelected ? ' selected' : ''}"
         onclick="submitFeedback(event, '${id}', '${opt.key}')"
-      >
-        <span class="fb-icon">${opt.icon}</span>${opt.label}
-      </button>
+        title="${opt.label}"
+      >${opt.icon}</button>
     `
   }).join('')
 
@@ -587,6 +702,41 @@ function renderAll() { AGENTS.forEach(a => render(a.id)) }
 // ── Full panel ────────────────────────────────────────────────────────────────
 let _fullPanelId = null
 
+function _renderArtifactPanel(artifact) {
+  const ap = document.getElementById('artifact-panel')
+  if (!ap) return
+
+  if (!artifact) {
+    // Still loading — show spinner
+    ap.querySelector('.ap-body').innerHTML = `
+      <div class="ap-loading">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    `
+    ap.querySelector('.ap-footer').innerHTML = ''
+    return
+  }
+
+  ap.querySelector('.ap-body').innerHTML = `
+    <div class="ap-title">${artifact.title || 'Reference'}</div>
+    ${artifact.creator || artifact.year
+      ? `<div class="ap-meta">${[artifact.creator, artifact.year].filter(Boolean).join(' · ')}</div>`
+      : ''}
+    <p class="ap-caption">${artifact.caption || ''}</p>
+  `
+
+  const footer = ap.querySelector('.ap-footer')
+  if (artifact.link) {
+    footer.innerHTML = `
+      <button class="ap-link" onclick="api.openLink('${artifact.link.replace(/'/g, "\\'")}')">
+        open reference ↗
+      </button>
+    `
+  } else {
+    footer.innerHTML = ''
+  }
+}
+
 function showFullPanel(id) {
   const agent = AGENTS.find(a => a.id === id)
   const s = state[id]
@@ -599,33 +749,100 @@ function showFullPanel(id) {
       <div class="fp-avatar" style="border-color:color-mix(in srgb,${agent.color} 50%,transparent)">
         <img src="${agent.avatar}" alt="${agent.name}"/>
       </div>
-      <div>
+      <div style="flex:1">
         <div class="fp-name" style="color:color-mix(in srgb,${agent.color} 75%,#d0cbc4)">${agent.name}</div>
         <div class="fp-role" style="color:color-mix(in srgb,${agent.color} 50%,#555)">${agent.role}</div>
       </div>
+      <button class="fp-close" onclick="closeFullPanel()">×</button>
     </div>
-    <p class="fp-comment">${s.comment}</p>
-    <div>
+
+    <div class="fp-body">
+      ${s.noticed ? `<div class="fp-noticed">Noticed: ${s.noticed}</div>` : ''}
+      <p class="fp-comment">${s.comment}</p>
+
+      <div id="artifact-panel" class="artifact-panel" style="--fp-c:${agent.color}">
+        <div class="ap-header">
+          <div class="ap-eyebrow">◈ reference artifact</div>
+        </div>
+        <div class="ap-body">
+          <div class="ap-loading">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+        <div class="ap-footer"></div>
+      </div>
+    </div>
+
+    <div style="flex-shrink:0">
       <div class="fp-feedback-label">Your take</div>
       <div class="fp-buttons">
         ${FEEDBACK_OPTIONS.map(opt => `
           <button class="fp-btn${s.feedbackKey === opt.key ? ' selected' : ''}"
             onclick="fpFeedback('${id}','${opt.key}')">
-            <span style="margin-right:6px;opacity:0.6">${opt.icon}</span>${opt.label}
+            <span class="fp-btn-face">${opt.icon}</span>
+            <span class="fp-btn-label">${opt.label}</span>
           </button>`).join('')}
       </div>
     </div>
   `
+
   panel.classList.remove('hidden', 'leaving')
   panel.classList.add('entering')
-  panel.addEventListener('animationend', () => panel.classList.remove('entering'), { once: true })
+  panel.addEventListener('animationend', () => {
+    panel.classList.remove('entering')
+    // Slide the artifact panel in after the main panel has appeared
+    const ap = document.getElementById('artifact-panel')
+    if (ap) {
+      ap.classList.add('ap-in')
+      ap.addEventListener('animationend', () => ap.classList.remove('ap-in'), { once: true })
+    }
+  }, { once: true })
+
+  // Fetch artifact lazily — render it into the side panel when ready
+  _fetchArtifactForPanel(id)
+}
+
+async function _fetchArtifactForPanel(id) {
+  if (state[id].artifact) {
+    _renderArtifactPanel(state[id].artifact)
+    return
+  }
+  if (state[id].loadingArtifact) return
+  state[id].loadingArtifact = true
+  try {
+    const data = await api.fetchArtifact(id)
+    state[id].artifact = data.artifact || null
+    state[id].loadingArtifact = false
+    // Only update if this panel is still open for the same agent
+    if (_fullPanelId === id) {
+      _renderArtifactPanel(state[id].artifact)
+    }
+  } catch (_) {
+    state[id].loadingArtifact = false
+  }
+}
+
+function dismissArtifactPanel() {
+  const ap = document.getElementById('artifact-panel')
+  if (!ap) return
+  ap.classList.add('ap-out')
+  ap.addEventListener('animationend', () => ap.remove(), { once: true })
 }
 
 async function fpFeedback(id, key) {
   state[id].feedbackKey = key
   const preview = state[id].comment ? state[id].comment.slice(0, 80) : ''
-  await api.submitFeedback(id, key, preview)
-  closeFullPanel()
+
+  const _finish = async () => { await api.submitFeedback(id, key, preview); closeFullPanel() }
+
+  const ap = document.getElementById('artifact-panel')
+  if (ap) {
+    ap.classList.remove('ap-in')
+    ap.classList.add('ap-out')
+    ap.addEventListener('animationend', _finish, { once: true })
+  } else {
+    await _finish()
+  }
 }
 
 function closeFullPanel() {
@@ -636,14 +853,7 @@ function closeFullPanel() {
   panel.addEventListener('animationend', () => {
     panel.classList.add('hidden')
     panel.classList.remove('leaving')
-    if (id) {
-      state[id] = {
-        hasMessage: false, comment: null, artifact: null,
-        loadingComment: false, loadingArtifact: false,
-        expanded: false, artifactOpen: false, feedbackKey: null,
-      }
-      render(id)
-    }
+    if (id) { state[id] = resetAgentState(); render(id) }
     _fullPanelId = null
   }, { once: true })
 }
@@ -659,31 +869,17 @@ async function onCardClick(id) {
     const data = await api.fetchComment(id)
     state[id].loadingComment = false
     state[id].comment = data.comment
+    state[id].noticed = data.noticed || null
     render(id)
   }
   showFullPanel(id)
 }
 
 
-async function toggleArtifact(id) {
-  state[id].artifactOpen = !state[id].artifactOpen
-  if (state[id].artifactOpen && !state[id].artifact && !state[id].loadingArtifact) {
-    state[id].loadingArtifact = true
-    render(id)
-    const data = await api.fetchArtifact(id)
-    state[id].loadingArtifact = false
-    state[id].artifact = data.artifact || null
-  }
-  render(id)
-}
 
 async function dismiss(id) {
   await api.dismissComment(id)
-  state[id] = {
-    hasMessage: false, comment: null, artifact: null,
-    loadingComment: false, loadingArtifact: false,
-    expanded: false, artifactOpen: false, feedbackKey: null,
-  }
+  state[id] = resetAgentState()
   render(id)
 }
 
@@ -750,6 +946,9 @@ api.on('cycle-complete', ({ hand_raisers, manual }) => {
     state[a.id].hasMessage = raisers.has(a.id) || !!state[a.id].comment
   })
   renderAll()
+
+  // Pre-fetch artifacts so they're ready before user clicks
+  hand_raisers.forEach(id => _fetchArtifactForPanel(id))
 })
 
 // ── Drag (frameless window) ───────────────────────────────────────────────────
@@ -767,12 +966,56 @@ window.addEventListener('mouseup', () => { dragOrigin = null })
 // ── Init ──────────────────────────────────────────────────────────────────────
 buildGrid()
 
-// TEMP: hardcoded example — agents with pending thoughts
-state['recombinability'].hasMessage = true
-state['contrarian'].hasMessage = true
-state['discoverability'].hasMessage = true
+if (new URLSearchParams(window.location.search).get('debug') === '1') {
+  state['recombinability'].hasMessage = true
+  state['recombinability'].noticed = "the interface mirrors the recursive structure it is designed to scaffold"
+  state['recombinability'].comment = "There is a strange loop at the heart of this — a system built to surface latent structure in stories is itself structured like a story: characters with voices, an arc of observation, a tension between speaking and staying silent. The audience watching the creative work is, in some sense, the work watching itself. What is most interesting is that the seams are visible — the scaffold hasn't been hidden, it has been theatricalised, made into a cast of characters — and that choice is itself a creative argument about what it means to be accompanied rather than assisted."
+  state['recombinability'].artifact = {
+    title: "Gödel, Escher, Bach: An Eternal Golden Braid",
+    creator: "Douglas Hofstadter",
+    year: "1979",
+    caption: "Hofstadter's central argument — that self-reference and strange loops are not paradoxes to be escaped but the very structure through which meaning emerges — maps directly onto a system that uses the form of an audience to observe the act of building an audience system.",
+    link: "https://en.wikipedia.org/wiki/G%C3%B6del,_Escher,_Bach"
+  }
+
+  state['contrarian'].hasMessage = true
+  state['contrarian'].noticed = "the system assumes creative friction requires an external voice to be felt"
+  state['contrarian'].comment = "Every design decision here rests on an unstated premise: that the distance between a creator and their own work needs to be populated — that the gap must be given a face, a name, a speaking part. But the most radically generative creative acts in history have been achieved by collapsing that gap entirely, by the artist becoming so fluent in their own interiority that the audience is already inside the process. The interesting question this system sidesteps is whether giving friction a social costume makes it easier to engage with — or easier to dismiss."
+  state['contrarian'].artifact = {
+    title: "Silence: Lectures and Writings",
+    creator: "John Cage",
+    year: "1961",
+    caption: "Cage's sustained inquiry into indeterminacy and the role of the observer is the sharpest counterpoint to a system predicated on voiced provocation — his argument that the most profound creative act is to remove the author's intention entirely is a challenge every design decision in StorySymbiosis has to answer.",
+    link: "https://en.wikipedia.org/wiki/Silence:_Lectures_and_Writings"
+  }
+
+  state['discoverability'].hasMessage = true
+  state['discoverability'].noticed = "the agent panel echoes the staging conventions of the Greek chorus"
+  state['discoverability'].comment = "The Greek chorus was not decoration — it was the community made present on stage, holding the ethical and emotional register of the audience in real time, speaking what the protagonist could not yet say about themselves. StorySymbiosis places that function at the edge of the screen: ambient, peripheral, neither author nor judge. Erving Goffman called this the 'interaction order' — the way social presence alone reshapes what we are willing to perform, even in private."
+  state['discoverability'].artifact = {
+    title: "The Presentation of Self in Everyday Life",
+    creator: "Erving Goffman",
+    year: "1959",
+    caption: "Goffman's dramaturgical framework — that all human action is performance shaped by the perceived audience — is the sociological foundation beneath StorySymbiosis's core design bet: that the mere presence of observers, even artificial ones, changes what a creator is willing to explore.",
+    link: "https://en.wikipedia.org/wiki/The_Presentation_of_Self_in_Everyday_Life"
+  }
+
+  state['reviewability'].hasMessage = true
+  state['reviewability'].noticed = "the session has drifted from interface decisions toward questions about authorship itself"
+  state['reviewability'].comment = "What began as a question about how to scaffold creative process has become, without announcement, a question about where creativity lives — whether it is a property of the person, the tool, the conversation between them, or something that only exists in the moment of their friction. Roland Barthes argued that the death of the author is the birth of the reader; this system is proposing a third term: the witness, neither author nor audience, who holds the space in which the work becomes possible. That is a philosophical claim as much as a design one, and the interface has not yet decided if it believes it."
+  state['reviewability'].artifact = {
+    title: "The Death of the Author",
+    creator: "Roland Barthes",
+    year: "1967",
+    caption: "Barthes's dissolution of authorial intent as the locus of meaning — and his insistence that meaning is constituted in the act of reading, not writing — is the theoretical precedent StorySymbiosis must either affirm or contest: if the agents shape what the creator makes, are they readers, co-authors, or something the vocabulary does not yet have a name for?",
+    link: "https://en.wikipedia.org/wiki/The_Death_of_the_Author"
+  }
+}
 
 renderAll()
+
+// Snap window to content height once fonts are loaded, then let the user resize freely
+document.fonts.ready.then(() => api.resize(document.querySelector('.shell').offsetHeight))
 </script>
 </body>
 </html>

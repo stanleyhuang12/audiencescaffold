@@ -1,8 +1,8 @@
 # StorySymbiosis
 
-Always-on-top Electron panel with four AI audience agents. They observe your screen every 60 seconds and raise a speech bubble when they have something to say. Works across **any creative environment** — design tools, browsers, code editors, document editors, whiteboards, terminals, and more.
+Always-on-top Electron panel with four AI audience agents. They observe your screen every 60 seconds and raise a speech bubble when they have something to say. Clicking an agent opens a full-screen talk panel with their comment, a real-world cultural artifact reference sourced live from the web, and a three-button feedback widget. Works across **any creative environment** — design tools, browsers, code editors, document editors, whiteboards, terminals, and more.
 
-Powered by **Google Gemini 2.0 Flash** for both vision analysis and text generation.
+Powered by **Google Gemini 2.0 Flash** for vision analysis, comment generation, and artifact search (via Gemini Google Search grounding).
 
 ## Project Structure
 
@@ -12,13 +12,13 @@ storysymbiosis/
 ├── CLAUDE.md               # Research project context doc
 ├── src/
 │   ├── main.js             # Electron main process
-│   ├── preload.js          # IPC bridge
+│   ├── preload.js          # IPC bridge (exposes api.* to renderer)
 │   └── renderer/
-│       └── index.html      # Panel UI (agents, feedback, export)
+│       └── index.html      # Panel UI (agents, talk panel, export)
 └── backend/
     ├── main.py             # FastAPI server
     ├── vlm.py              # Vision → state description (Gemini)
-    ├── audience.py         # Comment & artifact generation (Gemini)
+    ├── audience.py         # Comment & artifact generation (Gemini + Search grounding)
     ├── session.py          # Session state, logging, CSV/JSON export
     ├── personas.json       # Agent definitions
     └── requirements.txt    # Python dependencies
@@ -51,17 +51,21 @@ npm start
 ## Usage
 
 - Panel floats bottom-right, always on top. Drag the titlebar to reposition.
-- Speech bubbles appear on agent cards when they want to speak.
-- Click the card to load and expand their comment.
-- **Feedback buttons** — after reading a comment, respond with one of three options:
-  - ◆ *Interesting — worth exploring*
-  - → *I have a different direction*
-  - ○ *Not sure at this moment*
-- Click **▸ reference** inside the comment for a cultural artifact suggestion.
+- A **20-second warmup delay** runs on launch before the first capture fires.
+- Speech bubbles (animated dots) appear on agent cards when they have a thought — at most 1–2 agents speak per cycle.
+- Click a card to open the **talk panel**, which zooms in and shows:
+  - The agent's comment
+  - A **reference artifact** (real cultural/creative work sourced from the web via Gemini Search grounding) with title, creator, year, caption, and an external link
+  - **Your take** — three feedback buttons:
+    - ◆ *Interesting — worth exploring*
+    - → *I have a different direction*
+    - ○ *Not sure at this moment*
+- Selecting a feedback option closes the talk panel and clears the agent's notification.
+- **×** in the talk panel header closes it without giving feedback.
 - **Voice slider** — controls how often agents speak (left = quiet, right = reactive).
 - **⤓ button** — export session data (events CSV, states CSV, or full JSON).
 - **↺ button** or **⌘⇧S** — manual screen capture.
-- **—** minimizes, **×** closes.
+- **—** minimizes, **×** closes the panel.
 
 ## The Four Agents
 
@@ -76,7 +80,7 @@ Agents are **observers, not directors** — they never give instructions or say 
 
 ## Data Export
 
-Three export formats are available via the **⤓** button in the footer:
+Three export formats available via the **⤓** button in the footer:
 
 ### Interaction Events (CSV)
 One row per user/system interaction. Designed for quantitative analysis.
@@ -87,7 +91,7 @@ One row per user/system interaction. Designed for quantitative analysis.
 | `ts` | ISO 8601 timestamp |
 | `event_type` | `hand_raised`, `comment_shown`, `comment_feedback`, `comment_dismissed`, `artifact_shown` |
 | `agent_id` | Which agent (`recombinability`, `contrarian`, `discoverability`, `reviewability`) |
-| `state_index` | Links to the state snapshot that was active when this event occurred |
+| `state_index` | Links to the state snapshot active at the time (`null` if no capture has run yet) |
 | `trigger` | `passive` (auto cycle), `active` (manual capture), `user_click`, `passive_cue` |
 | `feedback_key` | `explore`, `different`, `unsure` (only for `comment_feedback` events) |
 | `feedback_label` | Full text of the selected feedback button |
@@ -117,7 +121,7 @@ Nested JSON with complete session data including all states and all audit entrie
 | POST | `/process` | Screenshot → VLM → agent roll |
 | GET | `/stream/{sid}` | SSE event stream |
 | POST | `/comment` | Generate agent comment (lazy, on click) |
-| POST | `/artifact` | Generate cultural artifact reference |
+| POST | `/artifact` | Generate cultural artifact reference via Gemini Search grounding |
 | POST | `/comment/feedback` | Record user feedback response |
 | POST | `/comment/dismiss` | Dismiss an agent comment |
 | POST | `/slider` | Update voice probability multiplier |
@@ -129,7 +133,7 @@ Nested JSON with complete session data including all states and all audit entrie
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Gemini API key |
+| `GEMINI_API_KEY` | Yes | Google Gemini API key (used for VLM, comment generation, and artifact search grounding) |
 
 ## License
 

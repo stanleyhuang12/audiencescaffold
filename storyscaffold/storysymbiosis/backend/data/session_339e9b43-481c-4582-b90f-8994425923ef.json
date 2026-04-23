@@ -1,0 +1,14 @@
+{
+  "session_id": "339e9b43-481c-4582-b90f-8994425923ef",
+  "state_count": 0,
+  "states": [],
+  "audit": [
+    {
+      "ts": "2026-04-22T14:04:44.904283+00:00",
+      "event": "slider_changed",
+      "agent": null,
+      "state_index": null,
+      "slider_value": 0.3
+    }
+  ]
+}

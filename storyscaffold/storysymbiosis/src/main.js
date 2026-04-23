@@ -1,18 +1,29 @@
-const { app, BrowserWindow, ipcMain, screen, globalShortcut, dialog } = require('electron')
-require('electron-reload')(__dirname)
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, dialog, systemPreferences, shell } = require('electron')
 const path = require('path')
+
+// When the launching terminal closes, stdout/stderr writes throw EIO.
+// Suppress those silently; re-exit on any other uncaught exception.
+process.stdout.on('error', () => {})
+process.stderr.on('error', () => {})
+process.on('uncaughtException', err => {
+  if (err.code === 'EIO') return
+  process.stderr.write(`[SS] Uncaught exception: ${err.stack}\n`)
+  process.exit(1)
+})
 const fs = require('fs')
 const screenshot = require('screenshot-desktop')
 const http = require('http')
 
 const BACKEND = 'http://localhost:8000'
-const INTERVAL_MS = 60_000
+const INTERVAL_MS = 30_000   // screenshot every 30s
+const SPEAK_EVERY  = 2        // agents only speak every Nth capture (= 60s)
 const W = 320
 const H = 480
 
 let win = null
 let sessionId = null
 let captureInterval = null
+let captureCount = 0
 
 // ── Window ────────────────────────────────────────────────────────────────────
 function createWindow() {
@@ -38,7 +49,8 @@ function createWindow() {
 
   win.setAlwaysOnTop(true, 'screen-saver')
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
-  win.loadFile(path.join(__dirname, 'renderer/index.html'))
+  const query = process.env.SS_DEBUG === '1' ? { debug: '1' } : {}
+  win.loadFile(path.join(__dirname, 'renderer/index.html'), { query })
   win.on('closed', () => { win = null })
 }
 
@@ -58,13 +70,17 @@ async function initSession() {
 // ── Capture ───────────────────────────────────────────────────────────────────
 async function captureAndProcess(manual = false) {
   if (!sessionId || !win) return
+  captureCount++
+  const roll = manual || (captureCount % SPEAK_EVERY === 0)
   win.webContents.send('capture-start', { manual })
   try {
     const buf = await screenshot({ format: 'png' })
+    console.log(`[SS] screenshot captured — ${Math.round(buf.length / 1024)} KB`)
     const result = await post('/process', {
       session_id: sessionId,
       image_b64: buf.toString('base64'),
       manual,
+      roll,
     })
     win.webContents.send('cycle-complete', {
       hand_raisers: result.hand_raisers || [],
@@ -72,15 +88,15 @@ async function captureAndProcess(manual = false) {
     })
     console.log(`[SS] cycle${manual ? ' manual' : ''} — raisers: ${result.hand_raisers?.join(', ') || 'none'}`)
   } catch (e) {
-    console.error('[SS] capture error:', e.message)
+    try { console.error('[SS] capture error:', e?.message ?? e) } catch (_) {}
     win.webContents.send('capture-done')
   }
 }
 
 function startLoop() {
-  setTimeout()
-  captureAndProcess()
-  captureInterval = setInterval(captureAndProcess, INTERVAL_MS)
+  const safe = () => captureAndProcess().catch(e => { if (e?.code !== 'EIO') try { console.error('[SS] loop error:', e?.message ?? e) } catch (_) {} })
+  safe()
+  captureInterval = setInterval(safe, INTERVAL_MS)
 }
 
 // ── Export helper ─────────────────────────────────────────────────────────────
@@ -128,6 +144,7 @@ ipcMain.on('manual-capture',  () => captureAndProcess(true))
 ipcMain.on('window-drag',     (_, d) => { if (win) { const [x,y] = win.getPosition(); win.setPosition(x+d.dx, y+d.dy) } })
 ipcMain.on('window-close',    () => win?.close())
 ipcMain.on('window-minimize', () => win?.minimize())
+ipcMain.on('window-resize',   (_, h) => { if (win) { const [w] = win.getSize(); win.setSize(w, Math.ceil(h)) } })
 
 // ── HTTP helpers ──────────────────────────────────────────────────────────────
 function post(path, body) {
@@ -153,9 +170,30 @@ function getRaw(path) {
   })
 }
 
+// ── Screen recording permission (macOS) ───────────────────────────────────────
+async function ensureScreenPermission() {
+  if (process.platform !== 'darwin') return
+  const status = systemPreferences.getMediaAccessStatus('screen')
+  console.log('[SS] screen recording permission:', status)
+  if (status !== 'granted') {
+    await dialog.showMessageBox({
+      type: 'warning',
+      title: 'Screen Recording Permission Required',
+      message: 'StorySymbiosis needs Screen Recording access.',
+      detail: 'Click OK to open System Settings → Privacy & Security → Screen Recording.\n\nAdd your terminal app (Terminal or iTerm2) to the list and toggle it on, then fully restart the app.',
+      buttons: ['Open System Settings', 'Cancel'],
+      defaultId: 0,
+    }).then(({ response }) => {
+      if (response === 0)
+        shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture')
+    })
+  }
+}
+
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 app.whenReady().then(async () => {
   createWindow()
+  await ensureScreenPermission()
   await initSession()
   startLoop()
   const key = process.platform === 'darwin' ? 'Command+Shift+S' : 'Ctrl+Shift+S'

@@ -17,10 +17,13 @@ Routes:
   GET  /export/{sid}/states   — VLM state snapshots as CSV
 
 Environment variables required:
-  GEMINI_API_KEY              — Google Gemini API key
+  OPENAI_API_KEY              — OpenAI API key
 """
 
 import json, os, asyncio, random
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse, Response
@@ -51,6 +54,7 @@ class ProcessRequest(BaseModel):
     session_id: str
     image_b64: str
     manual: bool = False        # true when triggered by user hotkey / button
+    roll: bool = True           # false on interleaved silent captures
 
 class CommentRequest(BaseModel):
     session_id: str
@@ -87,7 +91,8 @@ def roll_speakers(personas: list[dict], slider: float, state_count: int) -> list
         if random.random() < effective_prob:
             winners.append((p["id"], p["speak_probability"]))
     winners.sort(key=lambda x: x[1], reverse=True)
-    return [w[0] for w in winners[:2]]
+    cap = random.choices([1, 2], weights=[2, 1], k=1)[0]
+    return [w[0] for w in winners[:cap]]
 
 
 # ── Session ───────────────────────────────────────────────────────────────────
@@ -107,13 +112,16 @@ async def process(req: ProcessRequest):
     prior_state = s.states[-1] if s.states else None
 
     current_state = await screenshot_to_state(req.image_b64, prior_state)
+    print(f"[SS] vlm state:\n{current_state}\n")
     s.add_state(current_state)
 
     trigger = "active" if req.manual else "passive"
-    hand_raisers = roll_speakers(PERSONAS, s.slider_value, len(s.states))
-    s.current_hand_raisers = hand_raisers
-    for aid in hand_raisers:
-        s.log_hand_raise(aid, trigger=trigger)
+    hand_raisers = []
+    if req.roll:
+        hand_raisers = roll_speakers(PERSONAS, s.slider_value, len(s.states))
+        s.current_hand_raisers = hand_raisers
+        for aid in hand_raisers:
+            s.log_hand_raise(aid, trigger=trigger)
 
     event = {
         "type": "cycle_complete",
@@ -149,9 +157,10 @@ async def get_comment(req: CommentRequest):
     persona = PERSONA_MAP.get(req.agent_id)
     if not persona:
         return JSONResponse({"error": "unknown agent"}, status_code=400)
-    comment = await generate_comment(persona, s.states[-1], s.states)
+    prior_comments = s.get_agent_comments(req.agent_id)
+    comment, noticed = await generate_comment(persona, s.states[-1], s.states, prior_comments)
     s.log_comment_shown(req.agent_id, comment, trigger=req.trigger)
-    return {"agent_id": req.agent_id, "comment": comment}
+    return {"agent_id": req.agent_id, "comment": comment, "noticed": noticed}
 
 
 @app.post("/artifact")
@@ -194,6 +203,7 @@ async def dismiss(req: DismissRequest):
 async def update_slider(req: SliderRequest):
     s = sess.get_or_create(req.session_id)
     s.slider_value = max(0.0, min(1.0, req.value))
+    s.log_slider_change(s.slider_value)
     return {"status": "ok"}
 
 

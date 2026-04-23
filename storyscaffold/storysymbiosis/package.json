@@ -7,9 +7,7 @@
     "start": "electron .",
     "backend": "cd backend && uvicorn main:app --reload --port 8000"
   },
-  "dependencies": {
-    "screenshot-desktop": "^1.12.7"
-  },
+  "dependencies": {},
   "devDependencies": {
     "electron": "^30.0.0",
     "electron-reload": "^2.0.0-alpha.1"
